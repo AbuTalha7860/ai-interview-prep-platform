@@ -6,7 +6,7 @@ An intelligent, AI-powered platform designed to simulate mock interviews, provid
 
 ## 🌐 Live Demo
 
-🔗 **Website:** [Visit the Platform](https://ai-interview-prep-platform.vercel.app)
+🔗 **Website:** [Visit the Platform](https://ai-interview-prep-platform-livid.vercel.app/)
 
 ---
 

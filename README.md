@@ -26,9 +26,9 @@ An intelligent, AI-powered platform designed to simulate mock interviews, provid
 
 > Screenshots are saved in `public/screenshots/` directory.
 
-| Home Page | Interview | Feedback | Dashboard |
-|-----------|-----------|----------|-----------|
-| ![Homepage](./public/screenshots/homepage.png) | ![Interview](./public/screenshots/interview.png) | ![Feedback](./public/screenshots/feedback.png) | ![Dashboard](./public/screenshots/dashboard.png) |
+| Dashboard | Questions | Upgrade | Interview | Feedback |
+|-----------|-----------|---------|-----------|----------|
+| ![Dashboard](./public/screenshots/dashboard.png) | ![Questions](./public/screenshots/questions.png) | ![Upgrade](./public/screenshots/upgrade.png) | ![Interview](./public/screenshots/interview.png) | ![Feedback](./public/screenshots/feedback.png) |
 
 ---
 

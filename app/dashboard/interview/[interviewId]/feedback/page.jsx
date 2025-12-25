@@ -2,7 +2,7 @@
 import { db } from "@/utils/db";
 import { UserAnswer } from "@/utils/schema";
 import { eq } from "drizzle-orm";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,20 +18,75 @@ const Feedback = () => {
   const params = useParams();
   const interviewId = params.interviewId; // ✅ This is the correct way
 
-  useEffect(() => {
-    GetFeedback();
-  }, []);
-
-  const GetFeedback = async () => {
-    const result = await db
-      .select()
-      .from(UserAnswer)
-      .where(eq(UserAnswer.mockIdRef, interviewId))
-      .orderBy(UserAnswer.id);
-
-    console.log(result);
-    setFeedbackList(result);
+  // Function to convert rating text to numeric value
+  const ratingToNumber = (rating) => {
+    if (!rating) return 0;
+    const ratingLower = String(rating).toLowerCase().trim();
+    
+    if (ratingLower.includes('excellent') || ratingLower.includes('outstanding') || ratingLower === '5') return 5;
+    if (ratingLower.includes('very good') || ratingLower.includes('very-good') || ratingLower === '4') return 4;
+    if (ratingLower.includes('good') || ratingLower === '3') return 3;
+    if (ratingLower.includes('fair') || ratingLower.includes('average') || ratingLower === '2') return 2;
+    if (ratingLower.includes('poor') || ratingLower.includes('needs improvement') || ratingLower === '1') return 1;
+    
+    // Try to parse as number if it's a numeric string
+    const num = parseInt(rating);
+    if (!isNaN(num) && num >= 1 && num <= 5) return num;
+    
+    return 0;
   };
+
+  // Function to convert numeric value back to rating text
+  const numberToRating = (num) => {
+    if (num >= 4.5) return 'Excellent';
+    if (num >= 3.5) return 'Very Good';
+    if (num >= 2.5) return 'Good';
+    if (num >= 1.5) return 'Fair';
+    return 'Poor';
+  };
+
+  // Calculate overall rating
+  const calculateOverallRating = () => {
+    if (!feedbackList || feedbackList.length === 0) return null;
+    
+    const ratings = feedbackList.map(item => ratingToNumber(item.rating));
+    const validRatings = ratings.filter(r => r > 0);
+    
+    if (validRatings.length === 0) return null;
+    
+    const average = validRatings.reduce((sum, rating) => sum + rating, 0) / validRatings.length;
+    return {
+      text: numberToRating(average),
+      numeric: average.toFixed(1),
+      percentage: ((average / 5) * 100).toFixed(0)
+    };
+  };
+
+  const GetFeedback = useCallback(async () => {
+    if (!interviewId) return;
+    
+    try {
+      const result = await db
+        .select()
+        .from(UserAnswer)
+        .where(eq(UserAnswer.mockIdRef, interviewId))
+        .orderBy(UserAnswer.id);
+
+      console.log('Feedback results:', result);
+      setFeedbackList(result || []);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      setFeedbackList([]);
+    }
+  }, [interviewId]);
+
+  const overallRating = calculateOverallRating();
+
+  useEffect(() => {
+    if (interviewId) {
+      GetFeedback();
+    }
+  }, [interviewId, GetFeedback]);
 
   return (
     <div className="p-6">
@@ -42,8 +97,26 @@ const Feedback = () => {
       <h2 className="text-3xl font-bold text-green-500 mb-6">Congratulations!</h2>
       <h2 className="font-bold text-2xl">Here is your Interview Feedback</h2>
       
-      <h2 className="text-primary text-lg my-3">Your overall rating:</h2>
-      <h2 className="text-sm text-gray-400">
+      <div className="my-4 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border-2 border-blue-200">
+        <h2 className="text-primary text-lg font-semibold mb-2">Your overall rating:</h2>
+        {overallRating ? (
+          <div className="flex items-center gap-4">
+            <span className="text-3xl font-bold text-green-600">{overallRating.text}</span>
+            <span className="text-xl text-gray-600">({overallRating.numeric}/5.0)</span>
+            <div className="flex-1 bg-gray-200 rounded-full h-4 max-w-xs">
+              <div 
+                className="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-500"
+                style={{ width: `${overallRating.percentage}%` }}
+              ></div>
+            </div>
+            <span className="text-sm text-gray-500">{overallRating.percentage}%</span>
+          </div>
+        ) : (
+          <p className="text-gray-500">Calculating overall rating...</p>
+        )}
+      </div>
+      
+      <h2 className="text-sm text-gray-400 mb-4">
         Find below interview question with correct Answer, your answer, and
         feedback for improvement
       </h2>
